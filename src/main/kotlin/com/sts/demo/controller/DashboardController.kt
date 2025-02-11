@@ -4,15 +4,16 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
-class DashboardController{
+class DashboardController {
 
 	@GetMapping("/dashboard")
-	fun dashboard(model: Model, authentication: Authentication?): String {
+	fun dashboard(model: Model, authentication: Authentication?, csrfToken: CsrfToken): String {
 
 		if (authentication != null && authentication.isAuthenticated) {
 			val principal: Any = authentication.principal
@@ -32,6 +33,8 @@ class DashboardController{
 				val provider = (authentication as OAuth2AuthenticationToken).authorizedClientRegistrationId
 				model.addAttribute("oauth2Provider", provider)
 			}
+
+			model.addAttribute("csrf", csrfToken)
 		}
 
 		return "dashboard"

@@ -31,7 +31,14 @@ class SecurityConfig(private val customUserDetailsService: CustomUserDetailsServ
 					.loginPage("/login")
 					.defaultSuccessUrl("/dashboard", true)
 			}
-			.logout { logout -> logout.logoutSuccessUrl("/").permitAll() }
+			.logout { logout ->
+				logout
+					.logoutUrl("/perform-logout")
+					.logoutSuccessUrl("/")
+					.invalidateHttpSession(true)
+					.deleteCookies("JSESSIONID")
+					.permitAll()
+			}
 
 		return http.build()
 	}
