@@ -16,7 +16,8 @@ class SecurityConfig(private val customUserDetailsService: CustomUserDetailsServ
 		http
 			.authorizeHttpRequests {
 				it.requestMatchers("/", "/login", "/error", "/oauth2/**").permitAll()
-				it.anyRequest().authenticated()
+					.requestMatchers("/users").hasAnyRole("ADMIN", "SUPPORTER")
+					.anyRequest().authenticated()
 			}
 			.formLogin { login ->
 				login
