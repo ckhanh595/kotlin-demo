@@ -22,16 +22,20 @@ class DashboardController {
 			}
 			model.addAttribute("canManageUsers", isAdminOrSupporter)
 
-			if (principal is UserDetails) {
-				model.addAttribute("username", principal.username)
-				model.addAttribute("email", "123@gmail.com")
-				model.addAttribute("authorities", principal.authorities)
-			} else if (principal is OAuth2User) {
-				model.addAttribute("username", getPrincipalUsername(principal))
-				model.addAttribute("email", principal.attributes["email"])
-				model.addAttribute("authorities", principal.authorities)
-				val provider = (authentication as OAuth2AuthenticationToken).authorizedClientRegistrationId
-				model.addAttribute("oauth2Provider", provider)
+			when (principal) {
+				is UserDetails -> {
+					model.addAttribute("username", principal.username)
+					model.addAttribute("email", "123@gmail.com")
+					model.addAttribute("authorities", principal.authorities)
+				}
+
+				is OAuth2User -> {
+					model.addAttribute("username", getPrincipalUsername(principal))
+					model.addAttribute("email", principal.attributes["email"])
+					model.addAttribute("authorities", principal.authorities)
+					val provider = (authentication as OAuth2AuthenticationToken).authorizedClientRegistrationId
+					model.addAttribute("oauth2Provider", provider)
+				}
 			}
 
 			model.addAttribute("csrf", csrfToken)
