@@ -1,6 +1,7 @@
 package com.sts.demo.controller
 
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Controller
@@ -14,12 +15,15 @@ class DashboardController{
 	fun dashboard(model: Model, authentication: Authentication?): String {
 
 		if (authentication != null && authentication.isAuthenticated) {
-			val principal = authentication.principal
+			val principal: Any = authentication.principal
+			val isAdminOrSupporter: Boolean = authentication.authorities.any {
+				it.authority in listOf("ROLE_ADMIN", "ROLE_SUPPORTER")
+			}
+			model.addAttribute("canManageUsers", isAdminOrSupporter)
 
-			if (principal is org.springframework.security.core.userdetails.UserDetails) {
+			if (principal is UserDetails) {
 				model.addAttribute("username", principal.username)
 				model.addAttribute("email", "123@gmail.com")
-
 				model.addAttribute("authorities", principal.authorities)
 			} else if (principal is OAuth2User) {
 				model.addAttribute("username", getPrincipalUsername(principal))
