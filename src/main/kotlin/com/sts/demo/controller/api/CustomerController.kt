@@ -1,4 +1,4 @@
-package com.sts.demo.controller
+package com.sts.demo.controller.api
 
 import com.sts.demo.model.CreateCustomerRequest
 import com.sts.demo.model.CustomerResponse
