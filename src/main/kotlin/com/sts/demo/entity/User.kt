@@ -30,5 +30,5 @@ data class User(
 	var role: Role? = null,
 
 	@Column
-	val oauth2Provider: String? = null
+	var oauth2Provider: String? = null
 )

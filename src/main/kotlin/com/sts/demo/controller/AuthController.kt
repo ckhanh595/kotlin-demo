@@ -8,7 +8,10 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
-class AuthController (private val userRepository: UserRepository) {
+class AuthController(private val userRepository: UserRepository) {
+
+	@GetMapping("/")
+	fun home() = "redirect:/login"
 
 	@GetMapping("/login")
 	fun login(request: HttpServletRequest, error: String?, model: Model, logout: String?): String {

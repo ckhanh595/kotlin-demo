@@ -2,6 +2,7 @@
 @param String email
 @param String oauth2Provider
 @param Boolean canManageUsers
+@param org.springframework.security.web.csrf.CsrfToken csrf
 
 <!DOCTYPE html>
 <html>
@@ -29,10 +30,13 @@
             @endif
 
             <div class="mt-4">
-                <a href="/logout"
-                   class="inline-block bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                    Logout
-                </a>
+                <form action="/perform-logout" method="POST" class="inline">
+                    <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
+                    <button type="submit"
+                            class="inline-block bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
