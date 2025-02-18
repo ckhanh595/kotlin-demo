@@ -84,3 +84,13 @@ spring:
             user-info-uri: https://api.linkedin.com/v2/me
             user-name-attribute: id
 #            jwk-set-uri: https://www.linkedin.com/oauth/openid/jwks
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    disable-swagger-default-url: true
+  packagesToScan: com.sts.demo
+  pathsToMatch: /api/**

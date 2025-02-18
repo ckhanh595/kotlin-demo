@@ -30,7 +30,7 @@ class SecurityConfig(
 	fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
 		http
 			.authorizeHttpRequests {
-				it.requestMatchers("/", "/login", "/error", "/oauth2/**").permitAll()
+				it.requestMatchers("/", "/login", "/error", "/oauth2/**", "/v3/api-docs", "/swagger-ui/**", "/swagger-ui.html", "/hello").permitAll()
 					.requestMatchers("/users").hasAnyRole("ADMIN", "SUPPORTER")
 					.anyRequest().authenticated()
 			}
