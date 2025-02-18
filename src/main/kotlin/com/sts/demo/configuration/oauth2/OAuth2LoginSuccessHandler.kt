@@ -32,6 +32,7 @@ class OAuth2LoginSuccessHandler(
                 "github" -> oauth2User.attributes["email"] as? String ?: ""
                 "microsoft" -> oauth2User.attributes["email"] as String
                 "facebook" -> oauth2User.attributes["email"] as String
+                "linkedin" -> oauth2User.attributes["email"] as String
                 else -> ""
             }
 
