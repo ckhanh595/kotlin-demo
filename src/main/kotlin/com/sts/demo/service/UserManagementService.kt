@@ -1,7 +1,8 @@
 package com.sts.demo.service
 
-import com.sts.demo.entity.User
-import com.sts.demo.enums.Role
+import com.sts.demo.entity.UserEntity
+import com.sts.demo.model.enums.UserRole
+import com.sts.demo.model.enums.UserType
 import com.sts.demo.repository.UserRepository
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -13,10 +14,10 @@ class UserManagementService(
 	private val passwordEncoder: PasswordEncoder
 ) {
 
-	fun createUser(creatorRole: Role, username: String, email: String, password: String, role: Role) : User {
+	fun createUser(creatorUserRole: UserRole, username: String, email: String, password: String, userRole: UserRole) : UserEntity {
 		// Check if creator has permission to create this role
-		if (!creatorRole.canManageRole(role)) {
-			throw AccessDeniedException("You don't have permission to create users with role $role")
+		if (!creatorUserRole.canManageRole(userRole)) {
+			throw AccessDeniedException("You don't have permission to create users with role $userRole")
 		}
 
 		// Check if username already exists
@@ -28,28 +29,29 @@ class UserManagementService(
 		if (userRepository.existsByEmail(email)) {
 			throw IllegalArgumentException("Email already exists")
 		}
-		val user = User(
+		val userEntity = UserEntity(
 			username = username,
 			email = email,
 			password = passwordEncoder.encode(password),
-			role = role
+			userType = UserType.LOCAL,
+			userRole = userRole
 		)
 
-		return userRepository.save(user)
+		return userRepository.save(userEntity)
 	}
 
-	fun getUsers(viewerRole: Role): List<User> = when (viewerRole) {
-		Role.ADMIN, Role.SUPPORTER -> userRepository.findAll()
-		Role.CUSTOMER -> throw AccessDeniedException("Customers cannot view user list")
+	fun getUsers(viewerUserRole: UserRole): List<UserEntity> = when (viewerUserRole) {
+		UserRole.ADMIN, UserRole.SUPPORTER -> userRepository.findAll()
+		UserRole.CUSTOMER -> throw AccessDeniedException("Customers cannot view user list")
 	}
 
-	fun getUserById(viewerRole: Role, userId: Long): User {
+	fun getUserById(viewerUserRole: UserRole, userId: Long): UserEntity {
 		val user = userRepository.findById(userId)
 			.orElseThrow { NoSuchElementException("User not found") }
 
-		when (viewerRole) {
-			Role.ADMIN, Role.SUPPORTER -> return user
-			Role.CUSTOMER -> {
+		when (viewerUserRole) {
+			UserRole.ADMIN, UserRole.SUPPORTER -> return user
+			UserRole.CUSTOMER -> {
 				// Customers can only view their own profile
 				if (user.id != userId) {
 					throw AccessDeniedException("You don't have permission to view this user")

@@ -17,7 +17,7 @@ class CustomUserDetailsService(private val userRepository: UserRepository) : Use
         return org.springframework.security.core.userdetails.User.builder()
             .username(user.username)
             .password(user.password)
-            .authorities(SimpleGrantedAuthority("ROLE_${user.role?.name}"))
+            .authorities(SimpleGrantedAuthority("ROLE_${user.userRole?.name}"))
             .build()
     }
 }

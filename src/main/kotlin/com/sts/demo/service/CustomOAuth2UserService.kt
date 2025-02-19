@@ -1,14 +1,16 @@
 package com.sts.demo.service
 
-import com.sts.demo.entity.User
-import com.sts.demo.enums.Role
+import com.sts.demo.entity.UserEntity
+import com.sts.demo.model.enums.SupportedOAuth2Provider
+import com.sts.demo.model.enums.UserRole
+import com.sts.demo.model.enums.UserType
 import com.sts.demo.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.UUID
 
 @Service
 class CustomOAuth2UserService(
@@ -42,12 +44,13 @@ class CustomOAuth2UserService(
 		var user = userRepository.findByEmail(email)
 
 		if (user == null) {
-			user = User(
+			user = UserEntity(
 				username = username,
 				email = email,
 				password = passwordEncoder.encode(UUID.randomUUID().toString()),
-				role = Role.CUSTOMER,
-				oauth2Provider = provider
+				userRole = UserRole.CUSTOMER,
+				userType = UserType.OAUTH2,
+				oauth2Provider = SupportedOAuth2Provider.fromProviderName(provider)
 			)
 
 			userRepository.save(user)
@@ -55,7 +58,7 @@ class CustomOAuth2UserService(
 
 		} else {
 			if (user.oauth2Provider == null) {
-				user.oauth2Provider = provider
+				user.oauth2Provider = SupportedOAuth2Provider.fromProviderName(provider)
 				userRepository.save(user)
 				println("Updated existing user with OAuth2 provider: $provider")
 			}

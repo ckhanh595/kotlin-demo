@@ -1,5 +1,5 @@
-@param java.util.List<com.sts.demo.entity.User> users
-@param com.sts.demo.enums.Role[] roles
+@param java.util.List<com.sts.demo.entity.UserEntity> users
+@param com.sts.demo.model.enums.UserRole[] roles
 @param String error
 @param String success
 @param org.springframework.security.web.csrf.CsrfToken csrf
@@ -81,8 +81,8 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">${user.getUsername()}</td>
                             <td class="px-6 py-4 whitespace-nowrap">${user.getEmail() == null? "" : user.getEmail()}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${user.getRole()}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${user.getOauth2Provider() == null? "Local" : user.getOauth2Provider()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${user.getUserRole()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${user.getOauth2Provider() == null? "Local" : user.getOauth2Provider().toString()}</td>
                         </tr>
                     @endfor
                     </tbody>

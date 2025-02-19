@@ -1,7 +1,8 @@
 package com.sts.demo.configuration
 
-import com.sts.demo.entity.User
-import com.sts.demo.enums.Role
+import com.sts.demo.entity.UserEntity
+import com.sts.demo.model.enums.UserRole
+import com.sts.demo.model.enums.UserType
 import com.sts.demo.repository.UserRepository
 import org.springframework.boot.CommandLineRunner
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -18,13 +19,15 @@ class DataInitializer(
         val adminPassword = System.getenv("ADMIN_PASSWORD") ?: "ad123"
 
         if (userRepository.findByUsername(adminUsername) == null) {
-            val adminUser = User(
+            val adminUserEntity = UserEntity(
                 username = adminUsername,
                 password = passwordEncoder.encode(adminPassword),
                 email = "admin@sts.co",
-                role = Role.ADMIN
+                fullName = "Administrator",
+                userType = UserType.LOCAL,
+                userRole = UserRole.ADMIN
             )
-            userRepository.save(adminUser)
+            userRepository.save(adminUserEntity)
             println("Default admin created: $adminUsername (Use the password from environment variables)")
         } else {
             println("Admin user already exists, skipping creation.")

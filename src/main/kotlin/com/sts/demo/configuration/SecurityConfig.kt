@@ -3,20 +3,28 @@ package com.sts.demo.configuration
 import com.sts.demo.configuration.oauth2.OAuth2AccessTokenResponseConverterWithDefaults
 import com.sts.demo.configuration.oauth2.OAuth2LoginFailureHandler
 import com.sts.demo.configuration.oauth2.OAuth2LoginSuccessHandler
+import com.sts.demo.security.jwt.JwtRequestFilter
 import com.sts.demo.service.CustomOAuth2UserService
 import com.sts.demo.service.CustomUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.http.converter.FormHttpMessageConverter
-import org.springframework.security.config.Customizer
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class SecurityConfig(
@@ -24,11 +32,35 @@ class SecurityConfig(
 	private val customOAuth2UserService: CustomOAuth2UserService,
 	private val oAuth2LoginSuccessHandler: OAuth2LoginSuccessHandler,
 	private val oAuth2LoginFailureHandler: OAuth2LoginFailureHandler,
+	private val jwtRequestFilter: JwtRequestFilter
 ) {
 
 	@Bean
-	fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+	@Order(1)
+	fun apiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
 		http
+			.securityMatcher("/api/**")
+			.csrf{it.disable()}
+			.authorizeHttpRequests { auth ->
+				auth.requestMatchers("/api/auth/login").permitAll()
+					.requestMatchers("/api/public/**").permitAll()
+					.anyRequest().authenticated()
+			}
+			.sessionManagement{ session ->
+				session.sessionCreationPolicy(SessionCreationPolicy.NEVER)
+			}
+			.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter::class.java)
+
+		return http.build()
+	}
+
+	@Bean
+	@Order(2)
+	fun webSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+		http
+			.csrf{csrf ->
+				csrf.ignoringRequestMatchers("/api/auth/**")
+			}
 			.authorizeHttpRequests {
 				it.requestMatchers("/", "/login", "/error", "/oauth2/**", "/v3/api-docs", "/swagger-ui/**", "/swagger-ui.html", "/hello").permitAll()
 					.requestMatchers("/users").hasAnyRole("ADMIN", "SUPPORTER")
@@ -41,7 +73,6 @@ class SecurityConfig(
 					.permitAll()
 			}
 			.userDetailsService(customUserDetailsService)
-			.oauth2Client(Customizer.withDefaults())
 			.oauth2Login { oauth2 ->
 				oauth2
 					.loginPage("/login")
@@ -75,5 +106,22 @@ class SecurityConfig(
 		tokenResponseClient.setRestOperations(restTemplate)
 
 		return tokenResponseClient
+	}
+
+	@Bean
+	fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager {
+		return authenticationConfiguration.authenticationManager
+	}
+
+	@Bean
+	fun corsConfigurationSource(): CorsConfigurationSource {
+		val configuration = CorsConfiguration()
+		configuration.allowedOrigins = listOf("http://localhost:3000") // Your frontend URL
+		configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
+		configuration.allowedHeaders = listOf("*")
+		configuration.allowCredentials = true
+		val source = UrlBasedCorsConfigurationSource()
+		source.registerCorsConfiguration("/**", configuration)
+		return source
 	}
 }

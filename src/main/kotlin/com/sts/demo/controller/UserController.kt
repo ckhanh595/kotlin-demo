@@ -1,7 +1,8 @@
 package com.sts.demo.controller
 
-import com.sts.demo.entity.User
-import com.sts.demo.enums.Role
+import com.sts.demo.entity.UserEntity
+import com.sts.demo.model.enums.SupportedOAuth2Provider
+import com.sts.demo.model.enums.UserRole
 import com.sts.demo.service.UserManagementService
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.UserDetails
@@ -26,7 +27,7 @@ class UserController(private val userManagementService: UserManagementService) {
 		val users = userManagementService.getUsers(role)
 
 		model.addAttribute("users", users)
-		model.addAttribute("roles", Role.entries.toTypedArray())
+		model.addAttribute("roles", UserRole.entries.toTypedArray())
 		model.addAttribute("csrf", csrfToken)
 
 		return "user-management"
@@ -44,7 +45,7 @@ class UserController(private val userManagementService: UserManagementService) {
 		@RequestParam username: String,
 		@RequestParam email: String,
 		@RequestParam password: String,
-		@RequestParam role: Role,
+		@RequestParam userRole: UserRole,
 		authentication: Authentication,
 		redirectAttributes: RedirectAttributes
 	): String {
@@ -52,11 +53,11 @@ class UserController(private val userManagementService: UserManagementService) {
 			val creatorRole = getCurrentUserRole(authentication)
 
 			userManagementService.createUser(
-				creatorRole = creatorRole,
+				creatorUserRole = creatorRole,
 				username = username,
 				email = email,
 				password = password,
-				role = role
+				userRole = userRole
 			)
 			redirectAttributes.addFlashAttribute("success", "User created successfully")
 		} catch (e: Exception) {
@@ -90,13 +91,13 @@ class UserController(private val userManagementService: UserManagementService) {
 //		userManagementService.deleteUser(deleterRole, id)
 //	}
 
-	private fun getCurrentUserRole(authentication: Authentication): Role {
+	private fun getCurrentUserRole(authentication: Authentication): UserRole {
 		return when (val principal = authentication.principal) {
-			is UserDetails -> Role.valueOf(
+			is UserDetails -> UserRole.valueOf(
 				principal.authorities.first().authority.removePrefix("ROLE_")
 			)
 
-			is OAuth2User -> Role.CUSTOMER  // OAuth2 users are always customers
+			is OAuth2User -> UserRole.CUSTOMER  // OAuth2 users are always customers
 			else -> throw IllegalStateException("Unknown principal type")
 		}
 	}
@@ -106,22 +107,22 @@ data class CreateUserRequest(
 	val username: String,
 	val email: String,
 	val password: String,
-	val role: Role
+	val userRole: UserRole
 )
 
 data class UserDTO(
 	val id: Long?,
-	val username: String,
+	val username: String?,
 	val email: String?,
-	val role: Role?,
-	val oauth2Provider: String?
+	val userRole: UserRole?,
+	val oauth2Provider: SupportedOAuth2Provider?
 )
 
 
-fun User.toDTO() = UserDTO(
+fun UserEntity.toDTO() = UserDTO(
 	id = id,
 	username = username,
 	email = email,
-	role = role,
+	userRole = userRole,
 	oauth2Provider = oauth2Provider
 )

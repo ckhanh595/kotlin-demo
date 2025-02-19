@@ -33,5 +33,4 @@ class AuthController(private val userRepository: UserRepository) {
 		return "login"
 	}
 
-
 }
