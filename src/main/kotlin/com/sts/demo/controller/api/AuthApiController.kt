@@ -1,6 +1,6 @@
 package com.sts.demo.controller.api
 
-import com.sts.demo.security.jwt.JwtTokenUtil
+import com.sts.demo.security.JwtTokenUtil
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException

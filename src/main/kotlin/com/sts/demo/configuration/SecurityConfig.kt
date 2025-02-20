@@ -3,15 +3,16 @@ package com.sts.demo.configuration
 import com.sts.demo.configuration.oauth2.OAuth2AccessTokenResponseConverterWithDefaults
 import com.sts.demo.configuration.oauth2.OAuth2LoginFailureHandler
 import com.sts.demo.configuration.oauth2.OAuth2LoginSuccessHandler
-import com.sts.demo.security.jwt.JwtRequestFilter
-import com.sts.demo.service.CustomOAuth2UserService
-import com.sts.demo.service.CustomUserDetailsService
+import com.sts.demo.security.JwtRequestFilter
+import com.sts.demo.service.auth.CustomOAuth2UserService
+import com.sts.demo.service.auth.CustomUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.http.converter.FormHttpMessageConverter
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient
@@ -27,6 +28,7 @@ import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
+@EnableMethodSecurity
 class SecurityConfig(
 	private val customUserDetailsService: CustomUserDetailsService,
 	private val customOAuth2UserService: CustomOAuth2UserService,
@@ -40,13 +42,13 @@ class SecurityConfig(
 	fun apiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
 		http
 			.securityMatcher("/api/**")
-			.csrf{it.disable()}
+			.csrf { it.disable() }
 			.authorizeHttpRequests { auth ->
 				auth.requestMatchers("/api/auth/login").permitAll()
 					.requestMatchers("/api/public/**").permitAll()
 					.anyRequest().authenticated()
 			}
-			.sessionManagement{ session ->
+			.sessionManagement { session ->
 				session.sessionCreationPolicy(SessionCreationPolicy.NEVER)
 			}
 			.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter::class.java)
@@ -58,11 +60,20 @@ class SecurityConfig(
 	@Order(2)
 	fun webSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
 		http
-			.csrf{csrf ->
+			.csrf { csrf ->
 				csrf.ignoringRequestMatchers("/api/auth/**")
 			}
 			.authorizeHttpRequests {
-				it.requestMatchers("/", "/login", "/error", "/oauth2/**", "/v3/api-docs", "/swagger-ui/**", "/swagger-ui.html", "/hello").permitAll()
+				it.requestMatchers(
+					"/",
+					"/login",
+					"/error",
+					"/oauth2/**",
+					"/v3/api-docs",
+					"/swagger-ui/**",
+					"/swagger-ui.html",
+					"/hello"
+				).permitAll()
 					.requestMatchers("/users").hasAnyRole("ADMIN", "SUPPORTER")
 					.anyRequest().authenticated()
 			}
@@ -70,6 +81,7 @@ class SecurityConfig(
 				login
 					.loginPage("/login")
 					.defaultSuccessUrl("/dashboard", true)
+					.failureUrl("/login?error=true")
 					.permitAll()
 			}
 			.userDetailsService(customUserDetailsService)
@@ -97,9 +109,11 @@ class SecurityConfig(
 		val tokenResponseHttpMessageConverter = OAuth2AccessTokenResponseHttpMessageConverter()
 		tokenResponseHttpMessageConverter.setAccessTokenResponseConverter(OAuth2AccessTokenResponseConverterWithDefaults())
 
-		val restTemplate = RestTemplate(listOf(
-			FormHttpMessageConverter(), tokenResponseHttpMessageConverter
-		))
+		val restTemplate = RestTemplate(
+			listOf(
+				FormHttpMessageConverter(), tokenResponseHttpMessageConverter
+			)
+		)
 		restTemplate.errorHandler = OAuth2ErrorResponseErrorHandler()
 
 		val tokenResponseClient = DefaultAuthorizationCodeTokenResponseClient()
