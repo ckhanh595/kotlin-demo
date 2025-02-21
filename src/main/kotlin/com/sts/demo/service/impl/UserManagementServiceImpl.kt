@@ -2,8 +2,8 @@ package com.sts.demo.service.impl
 
 import com.sts.demo.entity.UserEntity
 import com.sts.demo.mapper.toDto
-import com.sts.demo.model.dto.CreateUserRequest
-import com.sts.demo.model.dto.CreateUserResponse
+import com.sts.demo.model.dto.user.CreateUserRequest
+import com.sts.demo.model.dto.user.CreateUserResponse
 import com.sts.demo.model.enums.UserRole
 import com.sts.demo.repository.UserRepository
 import com.sts.demo.service.UserManagementService

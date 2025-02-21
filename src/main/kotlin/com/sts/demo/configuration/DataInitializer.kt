@@ -15,8 +15,8 @@ class DataInitializer(
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
-        val adminUsername = System.getenv("ADMIN_USERNAME") ?: "ad"
-        val adminPassword = System.getenv("ADMIN_PASSWORD") ?: "ad123"
+        val adminUsername = System.getenv("ADMIN_USERNAME")
+        val adminPassword = System.getenv("ADMIN_PASSWORD")
 
         if (userRepository.findByUsername(adminUsername) == null) {
             val adminUserEntity = UserEntity(

@@ -1,8 +1,8 @@
 package com.sts.demo.service
 
 import com.sts.demo.entity.UserEntity
-import com.sts.demo.model.dto.CreateUserRequest
-import com.sts.demo.model.dto.CreateUserResponse
+import com.sts.demo.model.dto.user.CreateUserRequest
+import com.sts.demo.model.dto.user.CreateUserResponse
 import com.sts.demo.model.enums.UserRole
 
 interface UserManagementService {

@@ -1,7 +1,7 @@
 package com.sts.demo.controller.api
 
-import com.sts.demo.model.dto.CreateUserRequest
-import com.sts.demo.model.dto.CreateUserResponse
+import com.sts.demo.model.dto.user.CreateUserRequest
+import com.sts.demo.model.dto.user.CreateUserResponse
 import com.sts.demo.service.AuthService
 import com.sts.demo.service.UserManagementService
 import org.springframework.http.ResponseEntity

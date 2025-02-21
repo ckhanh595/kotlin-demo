@@ -1,7 +1,7 @@
 package com.sts.demo.mapper
 
 import com.sts.demo.entity.UserEntity
-import com.sts.demo.model.dto.CreateUserResponse
+import com.sts.demo.model.dto.user.CreateUserResponse
 
 fun UserEntity.toDto() = CreateUserResponse(
 	id = id,

@@ -1,47 +1,46 @@
 package com.sts.demo.service
 
 import com.sts.demo.entity.UserEntity
-import com.sts.demo.model.dto.CreateUserRequest
+import com.sts.demo.model.dto.user.CreateUserRequest
 import com.sts.demo.model.enums.UserRole
 import com.sts.demo.model.enums.UserType
 import com.sts.demo.repository.UserRepository
 import com.sts.demo.service.impl.UserManagementServiceImpl
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import io.mockk.Called
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
-import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.crypto.password.PasswordEncoder
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-@ExtendWith(MockitoExtension::class)
 class UserManagementServiceTest {
 
-	@Mock
 	private lateinit var userRepository: UserRepository
-
-	@Mock
 	private lateinit var passwordEncoder: PasswordEncoder
+	private lateinit var userManagementService: UserManagementService
 
-	@InjectMocks
-	private lateinit var userManagementService: UserManagementServiceImpl
+	@BeforeEach
+	fun setUp() {
+		userRepository = mockk()
+		passwordEncoder = mockk()
+		userManagementService = UserManagementServiceImpl(userRepository, passwordEncoder)
+	}
 
 	@Test
 	fun `createUser should create a new user successfully when all validations pass`() {
 		// Arrange
 		val creatorRole = UserRole.ADMIN
-		val request = createValidRequest()
-
-		`when` (userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL)).thenReturn(false)
-		`when` (userRepository.existsByEmailAndUserType(request.email, UserType.LOCAL)).thenReturn( false)
-		`when`(passwordEncoder.encode(request.password)).thenReturn("encoded_password")
-		val savedUser = mockSavedUser()
-		`when`(userRepository.save(any())).thenReturn(savedUser)
+		val request = createValidRequest(UserRole.SUPPORTER)
+		every { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) } returns false
+		every { userRepository.existsByEmailAndUserType(request.email, UserType.LOCAL) } returns false
+		every { passwordEncoder.encode(request.password) } returns "encoded_password"
+		val savedUser = createUserEntity()
+		every { userRepository.save(any()) } returns savedUser
 
 		// Act
 		val result = userManagementService.createUser(creatorRole, request)
@@ -51,21 +50,34 @@ class UserManagementServiceTest {
 		assertEquals(savedUser.id, result.id)
 		assertEquals(savedUser.username, result.username)
 		assertEquals(savedUser.email, result.email)
+		verify { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) }
+		verify { userRepository.existsByEmailAndUserType(request.email, UserType.LOCAL) }
+		verify { passwordEncoder.encode(request.password) }
+		verify { userRepository.save(any()) }
+	}
 
-		verify(userRepository).existsByUsernameAndUserType(request.username, request.userType)
-		verify(userRepository).existsByEmailAndUserType(request.email, request.userType)
-		verify(passwordEncoder).encode(request.password)
-		verify(userRepository).save(any())
+	@Test
+	fun `createUser should throw AccessDeniedException when creator role doesn't have permission to create user with requested role`() {
+		// Arrange
+		val creatorRole = UserRole.CUSTOMER
+		val request = createValidRequest(UserRole.SUPPORTER)
+
+		// Act and Assert
+		val exception = assertThrows(AccessDeniedException::class.java) {
+			userManagementService.createUser(creatorRole, request)
+		}
+		assertEquals("You don't have permission to create users with role ${request.userRole}", exception.message)
+		verify { userRepository wasNot Called }
+		verify { passwordEncoder wasNot Called }
 	}
 
 	@Test
 	fun `createUser should throw IllegalArgumentException when username already exists`() {
 		// Arrange
-		val request = createValidRequest()
 		val creatorRole = UserRole.ADMIN
+		val request = createValidRequest(UserRole.SUPPORTER)
 
-		// Mock repository to return true for username check
-		`when`(userRepository.existsByUsernameAndUserType(request.username, request.userType)).thenReturn(true)
+		every { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) } returns true
 
 		// Act & Assert
 		val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -73,22 +85,40 @@ class UserManagementServiceTest {
 		}
 
 		assertEquals("Username already exists", exception.message)
-
-		// Verify interactions
-//		verify(userRepository).existsByUsernameAndUserType(request.username, request.userType)
-//		verify(userRepository, never()).existsByEmailAndUserType(anyString(), any(UserType::class.java))
-//		verify(userRepository, never()).save(any())
+		verify(exactly = 1) { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) }
+		verify(exactly = 0) { userRepository.existsByEmailAndUserType(any(), any()) }
+		verify(exactly = 0) { userRepository.save(any()) }
 	}
 
-	private fun createValidRequest() = CreateUserRequest(
+	@Test
+	fun `createUser should throw IllegalArgumentException when email already exists`() {
+		// Arrange
+		val creatorRole = UserRole.ADMIN
+		val request = createValidRequest(UserRole.SUPPORTER)
+
+		every { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) } returns false
+		every { userRepository.existsByEmailAndUserType(request.email, UserType.LOCAL) } returns true
+
+		// Act & Assert
+		val exception = assertThrows(IllegalArgumentException::class.java) {
+			userManagementService.createUser(creatorRole, request)
+		}
+
+		assertEquals("Email already exists", exception.message)
+		verify(exactly = 1) { userRepository.existsByUsernameAndUserType(request.username, UserType.LOCAL) }
+		verify(exactly = 1) { userRepository.existsByEmailAndUserType(request.email, UserType.LOCAL) }
+		verify(exactly = 0) { userRepository.save(any()) }
+	}
+
+	private fun createValidRequest(userRole: UserRole) = CreateUserRequest(
 		username = "testuser",
 		email = "test@example.com",
 		password = "password",
 		fullName = "Test User",
-		userRole = UserRole.ADMIN
+		userRole = userRole
 	)
 
-	private fun mockSavedUser() = UserEntity(
+	private fun createUserEntity() = UserEntity(
 		id = 1L,
 		username = "testuser",
 		email = "test@example.com",

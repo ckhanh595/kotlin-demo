@@ -1,6 +1,6 @@
 package com.sts.demo.controller.mvc
 
-import com.sts.demo.model.dto.CreateUserRequest
+import com.sts.demo.model.dto.user.CreateUserRequest
 import com.sts.demo.model.enums.UserRole
 import com.sts.demo.service.AuthService
 import com.sts.demo.service.UserManagementService
