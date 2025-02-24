@@ -1,0 +1,19 @@
+app:
+  admin:
+    username: testadmin
+    password: testpassword
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+
+jwt:
+  secret: "abcdefghijklmnopqrstuvwxyz123456"
+  expiration: 86400
